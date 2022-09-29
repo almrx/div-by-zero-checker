@@ -15,6 +15,8 @@ import org.checkerframework.javacutil.AnnotationBuilder;
 import org.checkerframework.javacutil.AnnotationUtils;
 
 import javax.lang.model.element.AnnotationMirror;
+import javax.management.ReflectionException;
+
 import java.lang.annotation.Annotation;
 
 import java.util.Set;
@@ -72,6 +74,52 @@ public class DivByZeroTransfer extends CFTransfer {
             AnnotationMirror lhs,
             AnnotationMirror rhs) {
         // TODO
+        if ( Comparison.EQ.equals(operator)) {
+            if ( equal(rhs, reflect(Zero.class))) 
+                return reflect(Zero.class);
+            else if ( equal(rhs, reflect(NonZero.class))) 
+                return reflect(NonZero.class);
+        }
+
+        if ( Comparison.NE.equals(operator)) {
+            if ( equal(rhs, reflect(Zero.class))) 
+                return reflect(NonZero.class);
+            else if ( equal(rhs, reflect(NonZero.class))) 
+                return reflect(Zero.class);
+        }
+
+        if ( Comparison.GE.equals(operator)) {
+            if ( equal(rhs, reflect(Zero.class))) 
+                return reflect(Zero.class);
+            else if ( equal(rhs, reflect(NonZero.class)))
+                return lhs;
+
+        }
+
+        if ( Comparison.GT.equals(operator)) {
+            if ( equal(rhs, reflect(Zero.class))) 
+                return reflect(NonZero.class);
+            else if ( equal(rhs, reflect(NonZero.class)))
+                return lhs; // could be zero
+
+        }
+
+        if ( Comparison.LE.equals(operator)) {
+            if ( equal(rhs, reflect(Zero.class))) 
+                return reflect(Zero.class);  // could be zero
+            else if ( equal(rhs, reflect(NonZero.class)))
+                return lhs; // could be zero
+
+        }
+
+        if ( Comparison.LT.equals(operator)) {
+            if ( equal(rhs, reflect(Zero.class))) 
+                return reflect(NonZero.class);
+            else if ( equal(rhs, reflect(NonZero.class)))
+                return lhs; // could be zero
+
+        }
+
         return lhs;
     }
 
@@ -94,6 +142,126 @@ public class DivByZeroTransfer extends CFTransfer {
             AnnotationMirror lhs,
             AnnotationMirror rhs) {
         // TODO
+        // Addition
+        if (BinaryOperator.PLUS.equals(operator)) {
+            if ( equal(lhs, bottom()) || equal(rhs, bottom()) )
+                return bottom();
+            else if ( equal(lhs, top()) || equal(rhs, top()) )
+                return top();
+            else if ( equal(lhs, reflect(NonZero.class))
+                    && equal(rhs, reflect(NonZero.class)))
+                return top();
+            else if ( equal(lhs, reflect(Zero.class))
+                    && equal(rhs, reflect(Zero.class)))
+                return reflect(Zero.class);
+            else if ( equal(lhs, reflect(NonZero.class)) 
+                    || equal(rhs, reflect(NonZero.class)) )
+                return reflect(NonZero.class);
+        }
+
+        // Subtraction
+        if (BinaryOperator.MINUS.equals(operator)) {
+            if ( equal(lhs, bottom())) {
+                if ( equal(rhs, bottom()))
+                    return bottom();
+                if ( equal(rhs, top()))
+                    return bottom();
+                if ( equal(rhs, reflect(Zero.class)))
+                    return bottom();
+                if ( equal(rhs, reflect(NonZero.class)))
+                    return bottom();
+            } 
+            if ( equal(lhs, top())) {
+                if ( equal(rhs, bottom()))
+                    return bottom();
+                if ( equal(rhs, top()))
+                    return top();
+                if ( equal(rhs, reflect(Zero.class)))
+                    return top();
+                if ( equal(rhs, reflect(NonZero.class)))
+                    return top();
+            }
+            if ( equal(lhs, reflect(Zero.class))) {
+                if ( equal(rhs, bottom()))
+                    return bottom();
+                if ( equal(rhs, top()))
+                    return top();
+                if ( equal(rhs, reflect(Zero.class)))
+                    return reflect(Zero.class);
+                if ( equal(rhs, reflect(NonZero.class)))
+                    return reflect(NonZero.class);
+            } 
+            if ( equal(lhs, reflect(NonZero.class))) {
+                if ( equal(rhs, bottom()))
+                    return bottom();
+                if ( equal(rhs, top()))
+                    return top();
+                if ( equal(rhs, reflect(Zero.class)))
+                    return reflect(NonZero.class);
+                if ( equal(rhs, reflect(NonZero.class)))
+                    return top();
+            }
+        }
+
+        // Multiplication
+        if (BinaryOperator.TIMES.equals(operator)) {
+            if ( equal(lhs, bottom()) || equal(rhs, bottom()) )
+                return bottom();
+            else if ( equal(lhs, reflect(Zero.class))
+                    || equal(rhs, reflect(Zero.class)))
+                return reflect(Zero.class);
+            else if ( equal(lhs, top()) || equal(rhs, top()) )
+                return top();
+            else if ( equal(lhs, reflect(NonZero.class))
+                    && equal(rhs, reflect(NonZero.class)))
+                return reflect(NonZero.class);
+        }
+
+        // Division && Mod
+        if (BinaryOperator.DIVIDE.equals(operator) 
+                || BinaryOperator.MOD.equals(operator)) {
+            if ( equal(lhs, bottom())) {
+                if ( equal(rhs, bottom()))
+                    return bottom();
+                if ( equal(rhs, top()))
+                    return bottom();
+                if ( equal(rhs, reflect(Zero.class)))
+                    return bottom();
+                if ( equal(rhs, reflect(NonZero.class)))
+                    return bottom();
+            } 
+            if ( equal(lhs, top())) {
+                if ( equal(rhs, bottom()))
+                    return bottom();
+                if ( equal(rhs, top()))
+                    return top();
+                if ( equal(rhs, reflect(Zero.class)))
+                    return bottom();
+                if ( equal(rhs, reflect(NonZero.class)))
+                    return bottom();
+            }
+            if ( equal(lhs, reflect(Zero.class))) {
+                if ( equal(rhs, bottom()))
+                    return bottom();
+                if ( equal(rhs, top()))
+                    return top();
+                if ( equal(rhs, reflect(Zero.class)))
+                    return bottom();
+                if ( equal(rhs, reflect(NonZero.class)))
+                    return reflect(Zero.class);
+            } 
+            if ( equal(lhs, reflect(NonZero.class))) {
+                if ( equal(rhs, bottom()))
+                    return bottom();
+                if ( equal(rhs, top()))
+                    return top();
+                if ( equal(rhs, reflect(Zero.class)))
+                    return bottom();
+                if ( equal(rhs, reflect(NonZero.class)))
+                    return top();
+            }
+        }
+
         return top();
     }
 
